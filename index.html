@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GREANA SHOP</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f5f5f5}
+header{background:#2e7d32;color:#fff;padding:15px;text-align:center}
+.search{padding:10px;text-align:center;background:#fff}
+.search input{width:90%;max-width:500px;padding:10px}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px;padding:15px}
+.card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.card img{width:100%;height:140px;object-fit:cover}
+.card-body{padding:10px}
+.price{color:#2e7d32;font-weight:bold}
+button{cursor:pointer}
+.add-btn,.checkout{background:#2e7d32;color:#fff;border:none;padding:10px;width:100%;border-radius:6px}
+.cart-btn{position:fixed;right:20px;bottom:20px;background:#2e7d32;color:#fff;border:none;border-radius:50%;width:60px;height:60px;font-size:20px}
+.cart{position:fixed;top:0;right:-100%;width:350px;max-width:100%;height:100%;background:#fff;transition:.3s;padding:15px;overflow:auto}
+.cart.open{right:0}
+.item{border-bottom:1px solid #ddd;padding:10px 0}
+.qty button{width:30px}
+</style>
+</head>
+<body>
+<header><h1>GREANA SHOP</h1><p>Mithapur, Bihar</p></header>
+
+<div class="search">
+<input id="search" placeholder="Search products..." oninput="searchProducts()">
+</div>
+
+<div class="products" id="products"></div>
+
+<button class="cart-btn" onclick="toggleCart()">🛒 <span id="count">0</span></button>
+
+<div class="cart" id="cart">
+<h2>Your Cart</h2>
+<div id="cartItems"></div>
+<h3>Total: ₹<span id="total">0</span></h3>
+<button class="checkout" onclick="sendOrder()">Order on WhatsApp</button>
+</div>
+
+<script>
+const whatsappNumber="918292178120";
+
+const products=[
+{id:1,name:"Aashirvaad Atta",price:280,img:"https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600"},
+{id:2,name:"Milk 1L",price:60,img:"https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600"},
+{id:3,name:"Rice 5kg",price:350,img:"https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600"},
+{id:4,name:"Sugar 1kg",price:55,img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600"},
+{id:5,name:"Biscuits",price:40,img:"https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600"}
+];
+
+let cart=JSON.parse(localStorage.getItem("cart"))||[];
+
+function renderProducts(list=products){
+document.getElementById("products").innerHTML=list.map(p=>`
+<div class="card">
+<img src="${p.img}" alt="">
+<div class="card-body">
+<h3>${p.name}</h3>
+<div class="price">₹${p.price}</div>
+<button class="add-btn" onclick="addToCart(${p.id})">Add To Cart</button>
+</div>
+</div>`).join('');
+}
+
+function addToCart(id){
+const p=products.find(x=>x.id===id);
+const item=cart.find(x=>x.id===id);
+if(item)item.qty++;
+else cart.push({...p,qty:1});
+saveCart();
+}
+
+function saveCart(){
+localStorage.setItem("cart",JSON.stringify(cart));
+renderCart();
+}
+
+function renderCart(){
+const box=document.getElementById("cartItems");
+box.innerHTML=cart.map(i=>`
+<div class="item">
+<b>${i.name}</b><br>
+₹${i.price} x ${i.qty}
+<div class="qty">
+<button onclick="changeQty(${i.id},-1)">-</button>
+${i.qty}
+<button onclick="changeQty(${i.id},1)">+</button>
+<button onclick="removeItem(${i.id})">X</button>
+</div>
+</div>`).join('');
+
+const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
+document.getElementById("total").textContent=total;
+document.getElementById("count").textContent=cart.reduce((a,b)=>a+b.qty,0);
+}
+
+function changeQty(id,v){
+const item=cart.find(i=>i.id===id);
+item.qty+=v;
+if(item.qty<=0) cart=cart.filter(i=>i.id!==id);
+saveCart();
+}
+
+function removeItem(id){
+cart=cart.filter(i=>i.id!==id);
+saveCart();
+}
+
+function toggleCart(){
+document.getElementById("cart").classList.toggle("open");
+}
+
+function sendOrder(){
+if(cart.length===0){alert("Cart is empty");return;}
+let msg="GREANA SHOP ORDER%0A%0A";
+let total=0;
+cart.forEach(i=>{
+total+=i.price*i.qty;
+msg+=`${i.name} Qty:${i.qty} Amount:₹${i.price*i.qty}%0A`;
+});
+msg+=`%0ATotal: ₹${total}`;
+window.open(`https://wa.me/${whatsappNumber}?text=${msg}`,'_blank');
+}
+
+function searchProducts(){
+const q=document.getElementById("search").value.toLowerCase();
+renderProducts(products.filter(p=>p.name.toLowerCase().includes(q)));
+}
+
+renderProducts();
+renderCart();
+</script>
+</body>
+</html>
